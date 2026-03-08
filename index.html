@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+<title>Video Library</title>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<header class="topbar">
+
+<div class="nav-left">
+
+<button id="favoritesBtn">Favorites</button>
+<button id="camsBtn" class="active">Cams</button>
+<button id="fakesBtn">Fakes</button>
+<button id="addBtn">Add Videos</button>
+
+</div>
+
+<div class="nav-center">
+<input id="search" placeholder="Search videos">
+</div>
+
+<div class="nav-right">
+<button id="importBtn">Import</button>
+<button id="exportBtn">Export</button>
+</div>
+
+</header>
+
+
+<main>
+
+<div id="videoGrid" class="video-grid"></div>
+
+<div class="pagination">
+
+<button id="prevPage">Prev</button>
+<span id="pageInfo"></span>
+<button id="nextPage">Next</button>
+
+</div>
+
+</main>
+
+
+<!-- ADD VIDEOS SECTION -->
+
+<section id="addSection" class="hidden">
+
+<h2>Paste Host JSON</h2>
+
+<textarea id="jsonInput"></textarea>
+
+<br>
+
+<select id="categorySelect">
+
+<option value="cams">Cams</option>
+<option value="fakes">Fakes</option>
+
+</select>
+
+<button id="previewImport">Preview Import</button>
+
+<h3 id="importCount"></h3>
+
+<div id="importPreview"></div>
+
+<button id="confirmImport" class="hidden">Confirm Import</button>
+
+</section>
+
+
+<!-- PLAYER -->
+
+<div id="playerModal" class="hidden">
+
+<div id="playerOverlay"></div>
+
+<div id="playerContent">
+
+<button id="closePlayer">✕</button>
+
+<div id="playerContainer"></div>
+
+</div>
+
+</div>
+
+<script src="app.js"></script>
+
+</body>
+</html>
