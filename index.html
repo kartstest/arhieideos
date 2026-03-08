@@ -1,99 +1,645 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" class="dark">
 <head>
-
-<meta charset="UTF-8">
-<title>Video Library</title>
-
-<link rel="stylesheet" href="style.css">
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Video Library</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Roboto+Mono:wght@400;500&amp;display=swap');
+        
+        :root {
+            --primary: 234 179 8;
+        }
+        
+        .tail-container {
+            font-family: 'Inter', system_ui, sans-serif;
+        }
+        
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 24px;
+        }
+        
+        @media (min-width: 1280px) {
+            .video-grid {
+                grid-template-columns: repeat(5, 1fr);
+            }
+        }
+        
+        .video-card {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .video-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.3);
+        }
+        
+        .modal {
+            animation: modalPop 0.3s ease forwards;
+        }
+        
+        @keyframes modalPop {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        
+        .player-container {
+            aspect-ratio: 16 / 9;
+            background: #000;
+        }
+        
+        .thumbnail {
+            background-size: cover;
+            background-position: center;
+        }
+    </style>
 </head>
+<body class="tail-container bg-zinc-950 text-zinc-200 min-h-screen">
+    <div class="max-w-screen-2xl mx-auto">
+        <!-- Top Navigation -->
+        <nav class="bg-zinc-900 border-b border-zinc-800 sticky top-0 z-50">
+            <div class="px-8 py-5 flex items-center justify-between">
+                <!-- Left: Categories -->
+                <div class="flex items-center gap-2">
+                    <button onclick="switchCategory('cams')" id="btn-cams"
+                            class="category-btn px-8 py-3 rounded-2xl text-lg font-semibold transition-all flex items-center gap-3 hover:bg-zinc-800 active:scale-95">
+                        <span class="text-2xl">📹</span>
+                        <span>Cams</span>
+                    </button>
+                    <button onclick="switchCategory('fakes')" id="btn-fakes"
+                            class="category-btn px-8 py-3 rounded-2xl text-lg font-semibold transition-all flex items-center gap-3 hover:bg-zinc-800 active:scale-95">
+                        <span class="text-2xl">🎭</span>
+                        <span>Fakes</span>
+                    </button>
+                </div>
 
-<body>
+                <!-- Center: Search -->
+                <div class="flex-1 max-w-xl mx-8">
+                    <div class="relative">
+                        <input id="search-input"
+                               type="text"
+                               placeholder="Search video titles..."
+                               onkeyup="handleSearch(event)"
+                               class="w-full bg-zinc-800 border border-zinc-700 focus:border-yellow-500 rounded-3xl py-4 px-6 text-lg placeholder-zinc-500 focus:outline-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-zinc-500 absolute right-6 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 01-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                </div>
 
-<header class="topbar">
+                <!-- Right: Actions -->
+                <div class="flex items-center gap-4">
+                    <button onclick="showAddModal()"
+                            class="flex items-center gap-3 bg-zinc-800 hover:bg-zinc-700 transition-all px-6 py-4 rounded-3xl font-medium">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        <span class="text-base">Add More</span>
+                    </button>
+                    
+                    <button onclick="triggerImport()" 
+                            class="flex items-center gap-3 bg-zinc-800 hover:bg-zinc-700 transition-all px-6 py-4 rounded-3xl font-medium">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v-4m0 0l4 4m-4-4l4-4m12 0v4m0 0l-4-4m4 4l-4 4" />
+                        </svg>
+                        <span class="text-base">Import</span>
+                    </button>
+                    
+                    <button onclick="exportLibrary()" 
+                            class="flex items-center gap-3 bg-zinc-800 hover:bg-zinc-700 transition-all px-6 py-4 rounded-3xl font-medium">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v-4m0 0l4 4m-4-4l4-4m12 0v4m0 0l-4-4m4 4l-4 4" />
+                        </svg>
+                        <span class="text-base">Export</span>
+                    </button>
+                </div>
+            </div>
+        </nav>
 
-<div class="nav-left">
+        <!-- Main Content -->
+        <div class="px-8 py-8">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h1 id="category-title" class="text-4xl font-bold text-white">Cams</h1>
+                    <p id="stats" class="text-zinc-400 mt-1">0 videos • Page 1 of 1</p>
+                </div>
+                
+                <div class="flex items-center gap-6 text-sm">
+                    <button onclick="prevPage()" id="btn-prev"
+                            class="px-5 py-3 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 rounded-2xl flex items-center gap-2 transition-all disabled:opacity-40">
+                        ← Previous
+                    </button>
+                    <div id="page-info" class="font-mono text-zinc-400 px-6">1 / 1</div>
+                    <button onclick="nextPage()" id="btn-next"
+                            class="px-5 py-3 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 rounded-2xl flex items-center gap-2 transition-all disabled:opacity-40">
+                        Next →
+                    </button>
+                </div>
+            </div>
 
-<button id="favoritesBtn">Favorites</button>
-<button id="camsBtn" class="active">Cams</button>
-<button id="fakesBtn">Fakes</button>
-<button id="addBtn">Add Videos</button>
+            <!-- Video Grid -->
+            <div id="video-grid" class="video-grid">
+                <!-- Populated by JavaScript -->
+            </div>
 
-</div>
+            <!-- Empty state -->
+            <div id="empty-state" class="hidden flex flex-col items-center justify-center py-32 text-center">
+                <div class="text-8xl mb-6">📂</div>
+                <h2 class="text-3xl font-semibold text-zinc-300 mb-3">No videos yet</h2>
+                <p class="text-zinc-400 max-w-sm mb-8">Your library is empty.<br>Click <span class="text-yellow-400">"Add More"</span> to start building your collection.</p>
+                <button onclick="showAddModal()" 
+                        class="bg-yellow-400 hover:bg-yellow-300 text-black font-semibold px-10 py-4 rounded-3xl text-lg flex items-center gap-3">
+                    <span class="text-2xl">+</span> Add Your First Videos
+                </button>
+            </div>
+        </div>
+    </div>
 
-<div class="nav-center">
-<input id="search" placeholder="Search videos">
-</div>
+    <!-- Video Player Modal -->
+    <div id="player-modal" onclick="if(event.target.id==='player-modal') closePlayer()" 
+         class="hidden fixed inset-0 bg-black/90 z-[100] flex items-center justify-center">
+        <div class="max-w-6xl w-full mx-4 modal">
+            <!-- Close button -->
+            <button onclick="closePlayer()" 
+                    class="absolute top-6 right-6 text-white bg-black/70 hover:bg-red-600 w-12 h-12 rounded-2xl flex items-center justify-center text-3xl transition-all z-10">
+                ✕
+            </button>
+            
+            <!-- Player Container -->
+            <div class="player-container rounded-3xl overflow-hidden shadow-2xl border border-zinc-700" id="player-container">
+                <!-- iframe inserted here by JS -->
+            </div>
+            
+            <!-- Title -->
+            <div id="player-title" class="mt-6 text-2xl font-medium text-center text-white"></div>
+        </div>
+    </div>
 
-<div class="nav-right">
-<button id="importBtn">Import</button>
-<button id="exportBtn">Export</button>
-</div>
+    <!-- Add More Modal -->
+    <div id="add-modal" onclick="if(event.target.id==='add-modal') hideAddModal()" 
+         class="hidden fixed inset-0 bg-black/90 z-[110] flex items-center justify-center">
+        <div onclick="event.stopImmediatePropagation()" 
+             class="modal bg-zinc-900 rounded-3xl max-w-2xl w-full mx-4 overflow-hidden">
+            <!-- Header -->
+            <div class="px-8 py-6 border-b border-zinc-800 flex items-center justify-between">
+                <h2 class="text-2xl font-semibold">Add Videos</h2>
+                <button onclick="hideAddModal()" class="text-3xl text-zinc-400 hover:text-white">✕</button>
+            </div>
+            
+            <div class="p-8 space-y-8">
+                <!-- Category selector -->
+                <div>
+                    <label class="block text-sm text-zinc-400 mb-2">Save to category</label>
+                    <div class="flex gap-3">
+                        <button onclick="selectAddCategory('cams')" id="add-cams-btn"
+                                class="add-cat-btn flex-1 py-4 rounded-2xl border-2 border-yellow-400 bg-zinc-800 text-white font-medium">
+                            📹 Cams
+                        </button>
+                        <button onclick="selectAddCategory('fakes')" id="add-fakes-btn"
+                                class="add-cat-btn flex-1 py-4 rounded-2xl border border-zinc-700 hover:border-zinc-500">
+                            🎭 Fakes
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Paste JSON -->
+                <div>
+                    <label class="block text-sm text-zinc-400 mb-2">Paste your video array (JSON)</label>
+                    <textarea id="json-input" rows="12"
+                        class="w-full bg-zinc-950 border border-zinc-700 rounded-3xl p-6 font-mono text-sm resize-y focus:outline-none focus:border-yellow-400"
+                        placeholder='[{"title":"Video Name.mp4","poster":"https://...","preview":"https://...","embed":"<iframe src=...></iframe>"}, ...]'></textarea>
+                </div>
+                
+                <div class="flex items-center gap-3 text-xs text-amber-400 bg-amber-950 border border-amber-900 rounded-2xl p-4">
+                    <span class="text-2xl">💡</span>
+                    <div>Paste exactly the same format you showed earlier. You can paste 1 or 1000 videos at once.</div>
+                </div>
+            </div>
+            
+            <!-- Footer buttons -->
+            <div class="p-8 border-t border-zinc-800 flex gap-4">
+                <button onclick="hideAddModal()" 
+                        class="flex-1 py-5 rounded-3xl border border-zinc-700 hover:bg-zinc-800 transition-all">
+                    Cancel
+                </button>
+                <button onclick="addVideosFromInput()" 
+                        class="flex-1 py-5 bg-yellow-400 hover:bg-yellow-300 text-black font-semibold rounded-3xl transition-all">
+                    Add to Library
+                </button>
+            </div>
+        </div>
+    </div>
 
-</header>
+    <!-- Toast -->
+    <div id="toast" class="hidden fixed bottom-8 right-8 bg-zinc-800 border border-zinc-700 text-white px-8 py-4 rounded-3xl flex items-center gap-3 shadow-2xl">
+        <span id="toast-text"></span>
+    </div>
 
-
-<main>
-
-<div id="videoGrid" class="video-grid"></div>
-
-<div class="pagination">
-
-<button id="prevPage">Prev</button>
-<span id="pageInfo"></span>
-<button id="nextPage">Next</button>
-
-</div>
-
-</main>
-
-
-<!-- ADD VIDEOS SECTION -->
-
-<section id="addSection" class="hidden">
-
-<h2>Paste Host JSON</h2>
-
-<textarea id="jsonInput"></textarea>
-
-<br>
-
-<select id="categorySelect">
-
-<option value="cams">Cams</option>
-<option value="fakes">Fakes</option>
-
-</select>
-
-<button id="previewImport">Preview Import</button>
-
-<h3 id="importCount"></h3>
-
-<div id="importPreview"></div>
-
-<button id="confirmImport" class="hidden">Confirm Import</button>
-
-</section>
-
-
-<!-- PLAYER -->
-
-<div id="playerModal" class="hidden">
-
-<div id="playerOverlay"></div>
-
-<div id="playerContent">
-
-<button id="closePlayer">✕</button>
-
-<div id="playerContainer"></div>
-
-</div>
-
-</div>
-
-<script src="app.js"></script>
-
+    <script>
+        // ============== CONFIG ==============
+        const ITEMS_PER_PAGE = 20;
+        let currentCategory = 'cams';
+        let currentPage = 1;
+        let searchTerm = '';
+        
+        let library = {
+            cams: [],
+            fakes: []
+        };
+        
+        // ============== TAILWIND INIT ==============
+        function initTailwind() {
+            tailwind.config = {
+                content: [],
+                theme: {
+                    extend: {}
+                }
+            }
+        }
+        
+        // ============== LOCALSTORAGE ==============
+        function loadLibrary() {
+            const saved = localStorage.getItem('videoLibrary');
+            if (saved) {
+                library = JSON.parse(saved);
+            }
+        }
+        
+        function saveLibrary() {
+            localStorage.setItem('videoLibrary', JSON.stringify(library));
+        }
+        
+        // ============== UTILITIES ==============
+        function getEmbedSrc(embedHtml) {
+            const match = embedHtml.match(/src="([^"]+)"/i);
+            return match ? match[1] : '';
+        }
+        
+        function showToast(message, duration = 2500) {
+            const toast = document.getElementById('toast');
+            const text = document.getElementById('toast-text');
+            text.textContent = message;
+            toast.classList.remove('hidden');
+            toast.style.transform = 'translateY(0)';
+            
+            setTimeout(() => {
+                toast.style.transform = 'translateY(100px)';
+                setTimeout(() => {
+                    toast.classList.add('hidden');
+                }, 300);
+            }, duration);
+        }
+        
+        // ============== RENDER GRID ==============
+        function renderGrid() {
+            const grid = document.getElementById('video-grid');
+            const empty = document.getElementById('empty-state');
+            grid.innerHTML = '';
+            
+            let videos = currentCategory === 'cams' ? library.cams : library.fakes;
+            
+            // Apply search filter
+            if (searchTerm) {
+                const term = searchTerm.toLowerCase();
+                videos = videos.filter(v => v.title.toLowerCase().includes(term));
+            }
+            
+            const totalVideos = videos.length;
+            const totalPages = Math.ceil(totalVideos / ITEMS_PER_PAGE) || 1;
+            
+            // Clamp current page
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+            
+            const start = (currentPage - 1) * ITEMS_PER_PAGE;
+            const pageVideos = videos.slice(start, start + ITEMS_PER_PAGE);
+            
+            // Stats
+            document.getElementById('stats').textContent = 
+                `${totalVideos} videos • Page ${currentPage} of ${totalPages}`;
+            document.getElementById('page-info').textContent = `${currentPage} / ${totalPages}`;
+            
+            // Enable/disable pagination
+            document.getElementById('btn-prev').disabled = currentPage === 1;
+            document.getElementById('btn-next').disabled = currentPage === totalPages;
+            
+            if (pageVideos.length === 0) {
+                grid.classList.add('hidden');
+                empty.classList.remove('hidden');
+                return;
+            }
+            
+            grid.classList.remove('hidden');
+            empty.classList.add('hidden');
+            
+            pageVideos.forEach((video, index) => {
+                const cardHTML = `
+                    <div onclick="playVideo(${start + index})" 
+                         class="video-card bg-zinc-900 rounded-3xl overflow-hidden border border-zinc-800 cursor-pointer group">
+                        <div class="thumbnail h-40 relative" 
+                             style="background-image: url('${video.poster}')">
+                            <div class="absolute bottom-3 right-3 bg-black/70 text-[10px] font-mono px-2 py-0.5 rounded">
+                                PLAY
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <p class="line-clamp-2 text-sm font-medium leading-tight group-hover:text-yellow-300 transition-colors">
+                                ${video.title}
+                            </p>
+                        </div>
+                    </div>
+                `;
+                grid.innerHTML += cardHTML;
+            });
+        }
+        
+        // ============== VIDEO PLAYER ==============
+        function playVideo(globalIndex) {
+            let videos = currentCategory === 'cams' ? library.cams : library.fakes;
+            const video = videos[globalIndex];
+            if (!video) return;
+            
+            const src = getEmbedSrc(video.embed);
+            if (!src) {
+                showToast("Invalid embed code!", 3000);
+                return;
+            }
+            
+            const container = document.getElementById('player-container');
+            container.innerHTML = `
+                <iframe 
+                    src="${src}"
+                    width="100%"
+                    height="100%"
+                    frameborder="0"
+                    allowfullscreen
+                    allow="autoplay; fullscreen"
+                    class="w-full h-full">
+                </iframe>
+            `;
+            
+            document.getElementById('player-title').textContent = video.title;
+            document.getElementById('player-modal').classList.remove('hidden');
+            document.getElementById('player-modal').classList.add('flex');
+        }
+        
+        function closePlayer() {
+            const modal = document.getElementById('player-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            
+            // Stop video by clearing iframe
+            setTimeout(() => {
+                document.getElementById('player-container').innerHTML = '';
+            }, 300);
+        }
+        
+        // ============== CATEGORY SWITCH ==============
+        function switchCategory(cat) {
+            currentCategory = cat;
+            currentPage = 1;
+            
+            // Update active buttons
+            document.getElementById('btn-cams').classList.toggle('bg-zinc-800', cat === 'cams');
+            document.getElementById('btn-cams').classList.toggle('text-yellow-400', cat === 'cams');
+            
+            document.getElementById('btn-fakes').classList.toggle('bg-zinc-800', cat === 'fakes');
+            document.getElementById('btn-fakes').classList.toggle('text-yellow-400', cat === 'fakes');
+            
+            document.getElementById('category-title').textContent = cat === 'cams' ? 'Cams' : 'Fakes';
+            
+            renderGrid();
+        }
+        
+        // ============== PAGINATION ==============
+        function prevPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                renderGrid();
+            }
+        }
+        
+        function nextPage() {
+            const totalVideos = (currentCategory === 'cams' ? library.cams : library.fakes).length;
+            const totalPages = Math.ceil(totalVideos / ITEMS_PER_PAGE) || 1;
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderGrid();
+            }
+        }
+        
+        // ============== SEARCH ==============
+        function handleSearch(e) {
+            searchTerm = e.target.value.trim();
+            currentPage = 1;
+            renderGrid();
+        }
+        
+        // ============== ADD MODAL ==============
+        let addCategory = 'cams';
+        
+        function showAddModal() {
+            document.getElementById('add-modal').classList.remove('hidden');
+            document.getElementById('add-modal').classList.add('flex');
+            document.getElementById('json-input').focus();
+            selectAddCategory('cams');
+        }
+        
+        function hideAddModal() {
+            const modal = document.getElementById('add-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+        
+        function selectAddCategory(cat) {
+            addCategory = cat;
+            
+            const camsBtn = document.getElementById('add-cams-btn');
+            const fakesBtn = document.getElementById('add-fakes-btn');
+            
+            if (cat === 'cams') {
+                camsBtn.classList.add('border-yellow-400', 'bg-zinc-800');
+                fakesBtn.classList.remove('border-yellow-400', 'bg-zinc-800');
+            } else {
+                fakesBtn.classList.add('border-yellow-400', 'bg-zinc-800');
+                camsBtn.classList.remove('border-yellow-400', 'bg-zinc-800');
+            }
+        }
+        
+        function addVideosFromInput() {
+            const textarea = document.getElementById('json-input');
+            let inputText = textarea.value.trim();
+            
+            if (!inputText) {
+                showToast("Please paste some videos first");
+                return;
+            }
+            
+            // Try to parse JSON
+            let newVideos;
+            try {
+                newVideos = JSON.parse(inputText);
+            } catch (e) {
+                // Maybe user pasted without outer brackets (single object)
+                try {
+                    newVideos = JSON.parse(`[${inputText}]`);
+                } catch (e2) {
+                    showToast("Invalid JSON format. Check your paste.", 4000);
+                    return;
+                }
+            }
+            
+            if (!Array.isArray(newVideos)) {
+                showToast("Must be an array of videos", 3000);
+                return;
+            }
+            
+            if (newVideos.length === 0) {
+                showToast("No videos found", 2000);
+                return;
+            }
+            
+            // Validate basic structure
+            const validVideos = newVideos.filter(v => 
+                v && typeof v.title === 'string' && 
+                typeof v.poster === 'string' && 
+                typeof v.embed === 'string'
+            );
+            
+            if (validVideos.length === 0) {
+                showToast("No valid videos found in your paste", 3000);
+                return;
+            }
+            
+            // Add to library
+            if (addCategory === 'cams') {
+                library.cams = library.cams.concat(validVideos);
+            } else {
+                library.fakes = library.fakes.concat(validVideos);
+            }
+            
+            saveLibrary();
+            hideAddModal();
+            textarea.value = '';
+            
+            showToast(`${validVideos.length} video${validVideos.length === 1 ? '' : 's'} added to ${addCategory.toUpperCase()}!`);
+            
+            // Refresh view
+            currentPage = 1;
+            renderGrid();
+        }
+        
+        // ============== IMPORT / EXPORT ==============
+        function exportLibrary() {
+            const dataStr = JSON.stringify(library, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'my-video-library.json';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showToast('Library exported successfully! Keep this file safe.');
+        }
+        
+        function triggerImport() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    try {
+                        const imported = JSON.parse(event.target.result);
+                        
+                        if (!imported.cams || !imported.fakes) {
+                            throw new Error("Missing cams or fakes arrays");
+                        }
+                        
+                        // Merge or replace? For simplicity we REPLACE (as per your workflow)
+                        library = {
+                            cams: imported.cams || [],
+                            fakes: imported.fakes || []
+                        };
+                        
+                        saveLibrary();
+                        currentPage = 1;
+                        renderGrid();
+                        
+                        showToast(`✅ Library imported! ${library.cams.length + library.fakes.length} videos loaded`);
+                    } catch (err) {
+                        showToast("Invalid library file. Please select the correct .json", 4000);
+                    }
+                };
+                reader.readAsText(file);
+            };
+            
+            input.click();
+        }
+        
+        // ============== KEYBOARD SHORTCUTS ==============
+        function handleKeyboard(e) {
+            if (e.key === '/' && document.getElementById('search-input') !== document.activeElement) {
+                e.preventDefault();
+                document.getElementById('search-input').focus();
+            }
+            
+            if (e.key === "Escape") {
+                const playerModal = document.getElementById('player-modal');
+                const addModal = document.getElementById('add-modal');
+                
+                if (!playerModal.classList.contains('hidden')) {
+                    closePlayer();
+                } else if (!addModal.classList.contains('hidden')) {
+                    hideAddModal();
+                }
+            }
+        }
+        
+        // ============== INITIALIZE ==============
+        function initialize() {
+            initTailwind();
+            loadLibrary();
+            
+            // Set initial active category
+            document.getElementById('btn-cams').classList.add('bg-zinc-800', 'text-yellow-400');
+            
+            // Render first time
+            renderGrid();
+            
+            // Keyboard support
+            document.addEventListener('keydown', handleKeyboard);
+            
+            // Welcome toast on first visit
+            if (library.cams.length === 0 && library.fakes.length === 0) {
+                setTimeout(() => {
+                    showToast('Welcome! Click "Add More" to start →', 4000);
+                }, 1200);
+            }
+            
+            // Make modals closable with Escape (already handled globally)
+            console.log('%c✅ My Video Library ready! (Single HTML file)', 'color:#facc15; font-family:monospace');
+        }
+        
+        // Auto start
+        window.onload = initialize;
+    </script>
 </body>
 </html>
